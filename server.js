@@ -19,23 +19,35 @@ const server = http.createServer(app);
 // Socket.IO setup
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:3000',
-  'https://swift-crm-frontend-master-union.vercel.app'
+  'https://swift-crm-frontend-master-union.vercel.app',
+  'http://swift-crm-frontend-master-union.vercel.app'
 ];
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  // Normalize origin (remove trailing slash and protocol variations)
+  const normalizedOrigin = origin.replace(/\/$/, '').toLowerCase();
+  return allowedOrigins.some(allowed => {
+    const normalizedAllowed = allowed.replace(/\/$/, '').toLowerCase();
+    return normalizedOrigin === normalizedAllowed;
+  });
+};
 
 const io = socketIo(server, {
   cors: {
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1) {
+      if (isOriginAllowed(origin)) {
         callback(null, true);
       } else {
+        console.warn('Socket.io CORS blocked origin:', origin);
         callback(new Error('Not allowed by CORS'));
       }
     },
     methods: ['GET', 'POST'],
     credentials: true
-  }
+  },
+  path: '/socket.io/'
 });
 
 setupSocketIO(io);
@@ -47,10 +59,10 @@ app.use(helmet());
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (isOriginAllowed(origin)) {
       callback(null, true);
     } else {
+      console.warn('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
