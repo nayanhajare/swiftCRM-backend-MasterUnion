@@ -20,17 +20,44 @@ const server = http.createServer(app);
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:3000',
   'https://swift-crm-frontend-master-union.vercel.app',
-  'http://swift-crm-frontend-master-union.vercel.app'
+  'http://swift-crm-frontend-master-union.vercel.app',
+  'https://swift-crm-frontend-master-union-5sfrt3fij.vercel.app',
+  'http://swift-crm-frontend-master-union-5sfrt3fij.vercel.app'
 ];
 
 const isOriginAllowed = (origin) => {
   if (!origin) return true;
   // Normalize origin (remove trailing slash and protocol variations)
   const normalizedOrigin = origin.replace(/\/$/, '').toLowerCase();
-  return allowedOrigins.some(allowed => {
+  
+  // Check exact matches
+  const exactMatch = allowedOrigins.some(allowed => {
     const normalizedAllowed = allowed.replace(/\/$/, '').toLowerCase();
     return normalizedOrigin === normalizedAllowed;
   });
+  
+  if (exactMatch) return true;
+  
+  // Allow all Vercel subdomains matching the pattern
+  // swift-crm-frontend-master-union*.vercel.app (with or without hash)
+  const vercelPattern = /^https?:\/\/swift-crm-frontend-master-union(-[a-z0-9]+)?\.vercel\.app$/i;
+  if (vercelPattern.test(normalizedOrigin)) {
+    console.log('✅ CORS allowed Vercel origin:', normalizedOrigin);
+    return true;
+  }
+  
+  // Also check if it starts with the base pattern (more flexible)
+  if (normalizedOrigin.includes('swift-crm-frontend-master-union') && normalizedOrigin.includes('.vercel.app')) {
+    console.log('✅ CORS allowed Vercel origin (flexible match):', normalizedOrigin);
+    return true;
+  }
+  
+  // Allow localhost for development
+  if (normalizedOrigin.includes('localhost') || normalizedOrigin.includes('127.0.0.1')) {
+    return true;
+  }
+  
+  return false;
 };
 
 const io = socketIo(server, {
@@ -55,7 +82,10 @@ setupSocketIO(io);
 app.set('io', io);
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginEmbedderPolicy: false
+}));
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -66,7 +96,11 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
 }));
 app.use(morgan('dev'));
 app.use(express.json());
