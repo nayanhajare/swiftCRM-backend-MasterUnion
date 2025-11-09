@@ -222,8 +222,8 @@ router.post('/', [
     // Send email notification if assigned to someone else
     if (lead.assignedToId && lead.assignedToId !== req.user.id) {
       const assignedUser = await User.findByPk(lead.assignedToId);
-      if (assignedUser) {
-        const emailData = emailTemplates.leadAssigned(lead.name, assignedUser.name);
+      if (assignedUser && assignedUser.email) {
+        const emailData = emailTemplates.leadAssigned(lead.name, assignedUser.name, lead.id);
         await sendEmail(assignedUser.email, emailData.subject, emailData.html);
       }
     }
@@ -311,8 +311,8 @@ router.put('/:id', [
       // Send email notification
       if (lead.assignedToId) {
         const assignedUser = await User.findByPk(lead.assignedToId);
-        if (assignedUser) {
-          const emailData = emailTemplates.leadStatusChanged(lead.name, oldStatus, req.body.status);
+        if (assignedUser && assignedUser.email) {
+          const emailData = emailTemplates.leadStatusChanged(lead.name, oldStatus, req.body.status, lead.id);
           await sendEmail(assignedUser.email, emailData.subject, emailData.html);
         }
       }
@@ -331,8 +331,8 @@ router.put('/:id', [
       // Send email notification
       if (lead.assignedToId) {
         const assignedUser = await User.findByPk(lead.assignedToId);
-        if (assignedUser) {
-          const emailData = emailTemplates.leadAssigned(lead.name, assignedUser.name);
+        if (assignedUser && assignedUser.email) {
+          const emailData = emailTemplates.leadAssigned(lead.name, assignedUser.name, lead.id);
           await sendEmail(assignedUser.email, emailData.subject, emailData.html);
         }
       }

@@ -48,3 +48,4 @@ const Activity = sequelize.define('Activity', {
 
 module.exports = Activity;
 
+

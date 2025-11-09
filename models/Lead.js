@@ -70,3 +70,4 @@ const Lead = sequelize.define('Lead', {
 
 module.exports = Lead;
 
+

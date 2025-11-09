@@ -142,8 +142,8 @@ router.post('/', [
     // Send email notification to assigned user (if different from current user)
     if (lead.assignedToId && lead.assignedToId !== req.user.id) {
       const assignedUser = await User.findByPk(lead.assignedToId);
-      if (assignedUser) {
-        const emailData = emailTemplates.newActivity(lead.name, type, req.user.name);
+      if (assignedUser && assignedUser.email) {
+        const emailData = emailTemplates.newActivity(lead.name, type, req.user.name, lead.id);
         await sendEmail(assignedUser.email, emailData.subject, emailData.html);
       }
     }

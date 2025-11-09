@@ -202,3 +202,4 @@ If you're still having issues:
 4. Check firewall settings
 5. Verify PostgreSQL version compatibility (v12+)
 
+
